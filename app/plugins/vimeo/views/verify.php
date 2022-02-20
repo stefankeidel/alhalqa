@@ -1,6 +1,6 @@
 <?php
 /* ----------------------------------------------------------------------
- * app/plugins/vimeo/views/verify.php : 
+ * app/plugins/vimeo/views/verify.php :
  * ----------------------------------------------------------------------
  * CollectiveAccess
  * Open-source collections management software
@@ -15,10 +15,10 @@
  * the terms of the provided license as published by Whirl-i-Gig
  *
  * CollectiveAccess is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTIES whatsoever, including any implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ * WITHOUT ANY WARRANTIES whatsoever, including any implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * This source code is free and modifiable under the terms of 
+ * This source code is free and modifiable under the terms of
  * GNU General Public License. (http://www.gnu.org/copyleft/gpl.html). See
  * the "license.txt" file for details, or visit the CollectiveAccess web site at
  * http://www.CollectiveAccess.org
@@ -27,4 +27,5 @@
  */
 ?>
 
-<h2><?php print _t('Vimeo integration is now set up and ready to go!'); ?></h2>
+<h2>
+<?php if($this->getVar('success')) print _t('Vimeo integration is now set up and ready to go!'); ?></h2>

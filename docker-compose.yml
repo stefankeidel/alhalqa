@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+  proxy:
+    image: jwilder/nginx-proxy:alpine
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true"
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./proxy/conf.d:/etc/nginx/conf.d:rw
+      - ./proxy/vhost.d:/etc/nginx/vhost.d:rw
+      - ./proxy/html:/usr/share/nginx/html:rw
+      - ./proxy/certs:/etc/nginx/certs:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    restart: unless-stopped
+
+  collectiveaccess:
+    build: .
+    volumes:
+      - ./docker/apache-conf-d/php.ini:/etc/php/7.4/apache2/conf.d/00-mine.ini
+      - .:/var/www/html
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 8080:80
+
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: verystrong
+      MYSQL_USER: alhalqa_virtual
+      MYSQL_DATABASE: alhalqa_virtual
+      MYSQL_PASSWORD: alhalqa_virtual
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+    volumes:
+      - alhalqa_db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+
+
+volumes:
+  alhalqa_db:
+    external: true
