@@ -25,6 +25,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports:
       - 8080:80
+    restart: unless-stopped
 
   db:
     image: mysql
@@ -42,6 +43,7 @@ services:
     volumes:
       - alhalqa_db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
 
 
 volumes:

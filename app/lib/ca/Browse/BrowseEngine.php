@@ -2183,6 +2183,7 @@
 
 					// TODO: how do we handle non-latin characters?
 					$va_label_order_by_fields = isset($va_facet_info['order_by_label_fields']) ? $va_facet_info['order_by_label_fields'] : array('label');
+					if(is_array($va_facet)) {
 					foreach($va_facet as $vn_i => $va_item) {
 						$va_groups = array();
 						switch($ps_grouping_field) {
@@ -2248,6 +2249,7 @@
 								$va_grouped_items['~'][$vs_alpha_key] = $va_item;
 							}
 						}
+					}
 					}
 
 					// sort lists alphabetically

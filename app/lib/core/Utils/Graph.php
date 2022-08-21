@@ -15,10 +15,10 @@
  * the terms of the provided license as published by Whirl-i-Gig
  *
  * CollectiveAccess is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTIES whatsoever, including any implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ * WITHOUT ANY WARRANTIES whatsoever, including any implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * This source code is free and modifiable under the terms of 
+ * This source code is free and modifiable under the terms of
  * GNU General Public License. (http://www.gnu.org/copyleft/gpl.html). See
  * the "license.txt" file for details, or visit the CollectiveAccess web site at
  * http://www.CollectiveAccess.org
@@ -29,14 +29,14 @@
  *
  * ----------------------------------------------------------------------
  */
- 
+
  /**
   *
   */
- 
+
 require_once(__CA_LIB_DIR__."/core/ApplicationError.php");
 require_once(__CA_LIB_DIR__."/core/Configuration.php");
-	
+
 # ----------------------------------------------------------------------
 
 class Graph {
@@ -62,7 +62,7 @@ class Graph {
 	}
 	# --------------------------------------------------------------------------------------------
 	public function addNode($ps_node) {
-		if (!isset($this->opa_graph["NODES"][$ps_node])) {	
+		if (!isset($this->opa_graph["NODES"][$ps_node])) {
 			$this->opa_graph["NODES"][$ps_node] = array();
 		}
 	}
@@ -77,7 +77,7 @@ class Graph {
 					$this->addAttribute($vs_key, $vs_val, $vs_node);
 				}
 			}
-		}	
+		}
 	}
 	# --------------------------------------------------------------------------------------------
 	public function removeNode($ps_node) {
@@ -87,7 +87,7 @@ class Graph {
 			foreach($this->opa_graph["EDGES"] as $vs_node => $va_attr) {
 				unset($this->opa_graph["EDGES"][$vs_node][$ps_node]);
 			}
-			
+
 			# remove node
 			unset ($this->opa_graph["NODES"][$ps_node]);
 			return true;
@@ -98,7 +98,7 @@ class Graph {
 	# --------------------------------------------------------------------------------------------
 	public function hasNode ($ps_node) {
 		if (isset($this->opa_graph["NODES"][$ps_node]) && is_array($this->opa_graph["NODES"][$ps_node])) {
-			return true;	
+			return true;
 		} else {
 			return false;
 		}
@@ -124,7 +124,7 @@ class Graph {
 		if (!$pb_directed) {
 			$this->opa_graph["EDGES"][$ps_node2][$ps_node1] = array();
 		}
-		
+
 		if ((!is_array($pn_weight) && ($pn_weight))) {
 			$this->addAttribute("WEIGHT", $pn_weight, $ps_node1, $ps_node2, $pb_directed);
 			if (!$pb_directed) {
@@ -143,7 +143,7 @@ class Graph {
 						$this->addAttribute($vs_key, $vs_val, $ps_node2, $ps_node1, $pb_directed);
 					}
 				}
-			}	
+			}
 		}
 	}
 	# --------------------------------------------------------------------------------------------
@@ -151,7 +151,7 @@ class Graph {
 		if (!is_array($pa_nodes)) { return false; };
 
 		$vs_node1 = array_shift($pa_nodes);
-		
+
 		foreach($pa_nodes as $vs_node2) {
 			$this->addRelationship($vs_node1, $vs_node2, $pn_weight, $pb_directed);
 			$vs_node1 = $vs_node2;
@@ -165,18 +165,18 @@ class Graph {
 		} else {
 			return false;
 		}
-	}	
+	}
 	# --------------------------------------------------------------------------------------------
 	public function removeRelationship($ps_node1, $ps_node2, $pb_remove_reciprocal=false) {
 		if($this->opa_graph["NODES"][$ps_node1][$ps_node2]) {
 			# remove relationships
 			unset($this->opa_graph["EDGES"][$ps_node1][$ps_node2]);
 			unset($this->opa_graph["EDGES"][$ps_node1]);
-			
+
 			if ($pb_remove_reciprocal) {
 				$this->removeRelationship($ps_node2, $ps_node1, false);
 			}
-			
+
 			return true;
 		} else {
 			return false;
@@ -195,12 +195,12 @@ class Graph {
 			}
 		} else {						# add attribute to node
 			$this->opa_graph["NODES"][$ps_node1][$ps_attribute] = $pm_value;
-		}	
+		}
 	}
 	# --------------------------------------------------------------------------------------------
 	public function setAttributes ($pa_attributes, $ps_node1, $ps_node2="", $pb_directed=false) {
 		if (!is_array($pa_attributes)) { return false; }
-		
+
 		$this->addNode($ps_node1);
 		if ($ps_node2) {				# add attribute array to relationship
 			$this->addNode($ps_node2);
@@ -219,7 +219,7 @@ class Graph {
 		return $this->setAttributes($va_attributes, $ps_node1, $ps_node2, $pb_directed);
 	}
 	# --------------------------------------------------------------------------------------------
-	public function getAttributes ($ps_node1, $ps_node2="") { 
+	public function getAttributes ($ps_node1, $ps_node2="") {
 		if ($ps_node2) {
 			if (!isset($this->opa_graph["EDGES"][$ps_node1][$ps_node2])) { return null; }
 			return $this->opa_graph["EDGES"][$ps_node1][$ps_node2];
@@ -242,71 +242,74 @@ class Graph {
 			return $vs_attr;
 		} else {				# get attribute from node
 			return isset($this->opa_graph["NODES"][$ps_node1][$ps_attribute]) ? $this->opa_graph["NODES"][$ps_node1][$ps_attribute] : "";
-		}	
+		}
 	}
 	# --------------------------------------------------------------------------------------------
 	# --- Paths
 	# --------------------------------------------------------------------------------------------
 	# getPath() returns a path of nodes given a start and an end node; it always returns the shortest path
 	# between the nodes, that is, the one with the fewest intervening nodes. You can override this
-	# behavior by weighting individual relations - set the "WEIGHT" attribute to something greater than 1. 
+	# behavior by weighting individual relations - set the "WEIGHT" attribute to something greater than 1.
 	# Don't set WEIGHT less than 0.
 	#
 	# Implements dijkstra SSSP algorithm
-	public function getPath($ps_start_node, $ps_end_node) { 
+	public function getPath($ps_start_node, $ps_end_node) {
 		$va_edges =& $this->opa_graph["EDGES"];
-		
-		$vs_closest_node = $ps_start_node; 
+
+		$vs_closest_node = $ps_start_node;
 		$va_paths = array();
-		while (isset($vs_closest_node)) { 
-			$va_marked[$vs_closest_node] = true; 
-			
+		while (isset($vs_closest_node)) {
+			$va_marked[$vs_closest_node] = true;
+
 			if (is_array($va_edges[$vs_closest_node])) {
 				foreach($va_edges[$vs_closest_node] as $vs_vertex => $va_attr) {
 					$vn_distance = (isset($va_attr["WEIGHT"]) && $va_attr["WEIGHT"]) ? $va_attr["WEIGHT"] : 1;
-					
-					if (isset($va_marked[$vs_vertex]) && $va_marked[$vs_vertex]) continue; 
-					
+
+					if (isset($va_marked[$vs_vertex]) && $va_marked[$vs_vertex]) continue;
+
 					$vn_length = isset($va_paths[$vs_closest_node][0]) ? $va_paths[$vs_closest_node][0] : 0;
-					
+
 					$vn_distance += $vn_length;
-					if (!isset($va_paths[$vs_vertex]) || ($vn_distance < $va_paths[$vs_vertex][0])) { 
-						$va_paths[$vs_vertex] = isset($va_paths[$vs_closest_node]) ? $va_paths[$vs_closest_node] : ""; 
-						$va_paths[$vs_vertex][] = $vs_closest_node; 
-						$va_paths[$vs_vertex][0] = $vn_distance; 
-					} 
-				} 
+					if (!isset($va_paths[$vs_vertex]) || ($vn_distance < $va_paths[$vs_vertex][0])) {
+						$va_paths[$vs_vertex] = isset($va_paths[$vs_closest_node]) ? $va_paths[$vs_closest_node] : "";
+                        if ($va_paths[$vs_vertex] == '') {
+                            $va_paths[$vs_vertex] = [];
+                        }
+						$va_paths[$vs_vertex][] = $vs_closest_node;
+						$va_paths[$vs_vertex][0] = $vn_distance;
+					}
+				}
 			}
-			unset($vs_closest_node); 
+			unset($vs_closest_node);
 
 			if (is_array($va_paths)) {
 				foreach($va_paths as $vs_vertex => $va_path) {
 					if (!isset($vn_min)) $vn_min = $va_path[0];
-					if (isset($va_marked[$vs_vertex]) && $va_marked[$vs_vertex]) continue; 
-					$vn_distance = $va_path[0]; 
-					if (($vn_distance < $vn_min) || !isset($vs_closest_node)) { 
-						$vn_min = $vn_distance; 
-						$vs_closest_node = $vs_vertex; 
-					} 
-				} 
+					if (isset($va_marked[$vs_vertex]) && $va_marked[$vs_vertex]) continue;
+					$vn_distance = $va_path[0];
+					if (($vn_distance < $vn_min) || !isset($vs_closest_node)) {
+						$vn_min = $vn_distance;
+						$vs_closest_node = $vs_vertex;
+					}
+				}
 			}
 		}
-		
+
 		# return list of tables with associated keys
 		$va_return_path = array();
-		
+
 		if (isset($va_paths[$ps_end_node]) && is_array($va_paths[$ps_end_node])) {    # no path exists is $va_paths[$ps_end_node] is not set
 			$va_return_path[$ps_start_node] = $this->getNode($ps_start_node);
-			
-			reset ($va_paths[$ps_end_node]); 
+
+			reset ($va_paths[$ps_end_node]);
 			next ($va_paths[$ps_end_node]);  # skip first element - length of path
 			while (list(,$vs_vertex) = each($va_paths[$ps_end_node])) {
 				$va_return_path[$vs_vertex] = $this->getNode($vs_vertex);
-			}	
+			}
 			$va_return_path[$ps_end_node] = $this->getNode($ps_end_node);
 		}
 		return $va_return_path;
-	} 
+	}
 	# --------------------------------------------------------------------------------------------
 	public function getNeighbors($ps_node) {
 		if (isset($this->opa_graph["EDGES"][$ps_node]) && is_array($this->opa_graph["EDGES"][$ps_node])) {
@@ -322,19 +325,19 @@ class Graph {
     	if (!$this->_doTopoSort()) {
     		return array();	// cycle?
     	}
-    	
+
     	$va_tmp = array();
     	foreach(array_keys($this->getNodes()) as $vs_key) {
     		$vn_level = $this->getAttribute('topo_level', $vs_key);
     		$va_tmp[$vn_level][] = $vs_key;
     	}
-    	
+
     	$va_results = array();
     	ksort($va_tmp, SORT_NUMERIC);
     	foreach($va_tmp as $vs_i => $va_list) {
     		$va_results = array_merge($va_results, $va_list);
     	}
-    	
+
     	return $va_results;
     }
 	# --------------------------------------------------------------------------------------------
@@ -346,7 +349,7 @@ class Graph {
         	if (!$this->getAttribute('topo_visited', $vs_key) && $this->hasRelationship($ps_node, $vs_key)) { $vn_result++; }
         }
         return $vn_result;
-        
+
     }
     # --------------------------------------------------------------------------------------------
     private function _clearVisitedFlags() {
@@ -360,7 +363,7 @@ class Graph {
     private function _doTopoSort() {
         // mark all nodes as un-visited
         $this->_clearVisitedFlags();
-       
+
         // Iteratively peel off leaf nodes
         $vn_topo_level = 0;
         do {
@@ -376,11 +379,11 @@ class Graph {
             	$this->setAttribute('topo_visited', 1, $vs_key);
             	$this->setAttribute('topo_level', $vn_topo_level, $vs_key);
             }
-            
+
             $vn_topo_level++;
             if ($vn_topo_level > 100) { return false; }	// Just a sanity check...
         } while (sizeof($va_leaves) > 0);
-        
+
         // if all nodes were *not* visited then this graph wasn't a DAG and we want to know about it
          foreach(array_keys($this->getNodes()) as $vs_key) {
 			if (!$this->getAttribute('topo_visited', $vs_key)) {
