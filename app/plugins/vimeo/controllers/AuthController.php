@@ -26,8 +26,8 @@
  * ----------------------------------------------------------------------
  */
 
-    require_once(__CA_LIB_DIR__.'/core/Configuration.php');
-    include_once(__CA_LIB_DIR__."/core/Vimeo/Vimeo.php");
+ 	require_once(__CA_LIB_DIR__.'/Configuration.php');
+ 	include_once(__CA_LIB_DIR__."/Vimeo/vimeo.php");
 
     class AuthController extends ActionController {
         # -------------------------------------------------------

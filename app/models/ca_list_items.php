@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2008-2015 Whirl-i-Gig
+ * Copyright 2008-2021 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -29,14 +29,10 @@
  * 
  * ----------------------------------------------------------------------
  */
- 
- /**
-   *
-   */
- 
-require_once(__CA_LIB_DIR__.'/core/ModelSettings.php');
-require_once(__CA_LIB_DIR__.'/ca/RepresentableBaseModel.php');
-require_once(__CA_LIB_DIR__.'/ca/IHierarchy.php');
+
+require_once(__CA_LIB_DIR__.'/ModelSettings.php');
+require_once(__CA_LIB_DIR__.'/RepresentableBaseModel.php');
+require_once(__CA_LIB_DIR__.'/IHierarchy.php');
 require_once(__CA_MODELS_DIR__.'/ca_lists.php');
 require_once(__CA_MODELS_DIR__.'/ca_locales.php');
 
@@ -534,7 +530,7 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 	#
 	# ------------------------------------------------------
 	public function __construct($pn_id=null) {
-		$this->SETTINGS = new ModelSettings($this, 'settings', array());
+		$this->SETTINGS = new ModelSettings($this, 'settings', []);
 		parent::__construct($pn_id);	# call superclass constructor
 	}
 	# ------------------------------------------------------
@@ -542,7 +538,18 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 		parent::initLabelDefinitions($pa_options);
 		$this->BUNDLES['ca_object_representations'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Media representations'));
 		$this->BUNDLES['ca_objects'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related objects'));
-		$this->BUNDLES['ca_objects_table'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related objects table'));
+		$this->BUNDLES['ca_objects_table'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related objects list'));
+		$this->BUNDLES['ca_objects_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related objects list'));
+		$this->BUNDLES['ca_object_representations_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related object representations list'));
+		$this->BUNDLES['ca_entities_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related entities list'));
+		$this->BUNDLES['ca_places_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related places list'));
+		$this->BUNDLES['ca_occurrences_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related occurrences list'));
+		$this->BUNDLES['ca_collections_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related collections list'));
+		$this->BUNDLES['ca_list_items_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related list items list'));
+		$this->BUNDLES['ca_storage_locations_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related storage locations list'));
+		$this->BUNDLES['ca_loans_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related loans list'));
+		$this->BUNDLES['ca_movements_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related movements list'));
+		$this->BUNDLES['ca_object_lots_related_list'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related object lots list'));
 		$this->BUNDLES['ca_object_lots'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related lots'));
 		$this->BUNDLES['ca_entities'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related entities'));
 		$this->BUNDLES['ca_places'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related places'));
@@ -580,10 +587,10 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 	}
  	# ------------------------------------------------------
 	public function insert($pa_options=null) {
-		$vb_web_set_transaction = false;
+		$vb_we_set_transaction = false;
 		if (!$this->inTransaction()) {
 			$this->setTransaction(new Transaction($this->getDb()));
-			$vb_web_set_transaction = true;
+			$vb_we_set_transaction = true;
 		}
 		
 		$o_trans = $this->getTransaction();
@@ -609,13 +616,12 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 
 				if(!$vn_locale_id) {
 					$this->postError(750, _t('Locale %1 does not exist', $va_locales[0]), 'ca_list_items->insert()');
-					if ($vb_web_set_transaction) {
-						$this->getTransaction()->rollback();
-					}
+					if ($vb_we_set_transaction) { $this->getTransaction()->rollback(); }
 					return false;
 				}
 				
 				// create root in ca_places
+				require_once(__CA_MODELS_DIR__."/ca_places.php");
 				$t_place = new ca_places();
 				$t_place->setTransaction($o_trans);
 				$t_place->setMode(ACCESS_WRITE);
@@ -629,9 +635,7 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 				if ($t_place->numErrors()) {
 					$this->delete();
 					$this->errors = array_merge($this->errors, $t_place->errors);
-					if ($vb_web_set_transaction) {
-						$this->getTransaction()->rollback();
-					}
+					if ($vb_we_set_transaction) { $this->getTransaction()->rollback(); }
 					return false;
 				}
 				
@@ -645,20 +649,26 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 		}
 		
 		if ($this->numErrors()) {
-			if ($vb_web_set_transaction) { $o_trans->rollback(); }
+			if ($vb_we_set_transaction) {$o_trans->rollback(); }
 		} else {
-			if ($vb_web_set_transaction) { $o_trans->commit(); }
+			if ($vb_we_set_transaction) { $o_trans->commit(); }
 			$this->_setSettingsForList();
+			ExternalCache::flush('listItems');
 		}
 		return $vn_rc;
 	}
 	# ------------------------------------------------------
 	public function update($pa_options=null) {
+		$vb_we_set_transaction = false;
 		if (!$this->inTransaction()) {
+			$vb_we_set_transaction = true;
 			$this->setTransaction(new Transaction($this->getDb()));
 		}
+		
+		$o_trans = $this->getTransaction();
+		
 		if ($this->get('is_default') == 1) {
-			$this->getDb()->query("
+			$o_trans->getDb()->query("
 				UPDATE ca_list_items 
 				SET is_default = 0 
 				WHERE list_id = ? AND item_id <> ?
@@ -667,10 +677,11 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 		$vn_rc = parent::update($pa_options);
 		
 		if ($this->numErrors()) {
-			$this->getTransaction()->rollback();
+			if ($vb_we_set_transaction) { $this->getTransaction()->rollback(); } 
 		} else {
-			$this->getTransaction()->commit();
+			if ($vb_we_set_transaction) { $this->getTransaction()->commit(); }
 			$this->_setSettingsForList();
+			ExternalCache::flush('listItems');
 		}
 		return $vn_rc;
 	}
@@ -689,6 +700,7 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 		
 		$vn_id = $this->getPrimaryKey();
 		if(parent::delete($pb_delete_related, $pa_options, $pa_fields, $pa_table_list)) {
+			ExternalCache::flush('listItems');
 			// Delete any associated attribute values that use this list item
 			if (!($qr_res = $this->getDb()->query("
 				DELETE FROM ca_attribute_values 
@@ -853,7 +865,7 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
  	 */
  	public function isSaveable($po_request, $ps_bundle_name=null) {
  		// Is row loaded?
- 		if (!($vn_list_id = $this->get('list_id'))) { // this happens when a new list item is about to be created. in those cases we extract the list from the request.
+ 		if (!($vn_list_id = $this->get('list_id')) && $po_request) { // this happens when a new list item is about to be created. in those cases we extract the list from the request.
  			$vn_list_id = $this->_getListIDFromRequest($po_request);
  		}
 
@@ -914,4 +926,3 @@ class ca_list_items extends RepresentableBaseModel implements IHierarchy {
 	}
 	# ------------------------------------------------------
 }
-?>

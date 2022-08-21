@@ -1,12 +1,12 @@
 /* ----------------------------------------------------------------------
- * js/ca/ca.genericbundle.js
+ * js/ca.genericbundle.js
  * ----------------------------------------------------------------------
  * CollectiveAccess
  * Open-source collections management software
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2008-2015 Whirl-i-Gig
+ * Copyright 2008-2020 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -42,6 +42,7 @@ var caUI = caUI || {};
 			templateClassName: 'caItemTemplate',
 			initialValueTemplateClassName: 'caItemTemplate',
 			itemListClassName: 'caItemList',
+			newItemListClassName: '',
 			listItemClassName: 'caRelatedItem',
 			itemClassName: 'labelInfo',
 			localeClassName: 'labelLocale',
@@ -62,6 +63,9 @@ var caUI = caUI || {};
 			defaultValues: {},
 			bundlePreview: '',
 			readonly: 0,
+			
+			useAnimation: false,
+			animationDuration: 200,
 
 			// ajax loading of content
 			totalValueCount: null,
@@ -80,11 +84,15 @@ var caUI = caUI || {};
 			firstItemColor: null,
 			itemColor: null,
 			lastItemColor: null,
+			oddColor: null,
+			evenColor: null,
 
 			isSortable: false,
 			listSortOrderID: null,
 			listSortItems: null // if set, limits sorting to items specified by selector
 		}, options);
+		
+		if (!that.newItemListClassName) { that.newItemListClassName = that.itemListClassName; }
 
 		if (that.maxRepeats == 0) { that.maxRepeats = 65535; }
 
@@ -218,27 +226,39 @@ var caUI = caUI || {};
 			templateValues.fieldNamePrefix = this.fieldNamePrefix; // always pass field name prefix to template
 
 			// Set default value for new items
+			var is_new = id ? false : true;
 			if (!id) {
 				jQuery.each(this.defaultValues, function(k, v) {
 					if (v && !templateValues[k]) { templateValues[k] = v; }
 				});
+				id = 'new_' + this.getCount();	// set id to ensure sub-fields get painted with unsaved warning handler
 			}
 
 			// replace values in template
 			var jElement = jQuery(this.container + ' textarea.' + (isNew ? this.templateClassName : this.initialValueTemplateClassName)).template(templateValues);
 
-			if ((this.addMode == 'prepend') && isNew) {	// addMode only applies to newly created bundles
-				jQuery(this.container + " ." + this.itemListClassName).prepend(jElement);
+			if(options.useAnimation) {
+				jQuery(jElement).hide();
+				if ((this.addMode == 'prepend') && isNew) {	// addMode only applies to newly created bundles
+					jQuery(this.container + " ." + this.newItemListClassName).prepend(jElement);
+				} else {
+					jQuery(this.container + " ." + (isNew ? this.newItemListClassName : this.itemListClassName)).append(jElement);
+				}
+				jQuery(jElement).slideDown(this.animationDuration);
 			} else {
-				jQuery(this.container + " ." + this.itemListClassName).append(jElement);
+				if ((this.addMode == 'prepend') && isNew) {	// addMode only applies to newly created bundles
+					jQuery(this.container + " ." + this.newItemListClassName).prepend(jElement);
+				} else {
+					jQuery(this.container + " ." + (isNew ? this.newItemListClassName : this.itemListClassName)).append(jElement);
+				}
 			}
 
 			if (!dontUpdateBundleFormState && $.fn['scrollTo']) {	// scroll to newly added bundle
-				jQuery(this.container + " ." + this.itemListClassName).scrollTo("999999px", 250);
+				jQuery(this.container + " ." + this.newItemListClassName).scrollTo("999999px", 250);
 			}
 
 			if (this.onInitializeItem && (initialValues && !initialValues['_handleAsNew'])) {
-				this.onInitializeItem(id, initialValues, this, isNew);
+				this.onInitializeItem(is_new ? null : id, initialValues, this, isNew);
 			}
 
 			var that = this;	// for closures
@@ -255,9 +275,6 @@ var caUI = caUI || {};
 
 				var info = element_id.match(fieldRegex);
 				if (info && info[2] && (parseInt(info[2]) == id)) {
-					if (!this.initialValues[id]) {
-						console.log("err", this.initialValues, this.initialValues[id], id, info, info[1]);
-					}
 					if (typeof(this.initialValues[id][info[1]]) == 'boolean') {
 						this.initialValues[id][info[1]] = (this.initialValues[id][info[1]]) ? '1' : '0';
 					}
@@ -433,18 +450,31 @@ var caUI = caUI || {};
 				if (options.lastItemColor) {
 					jQuery(this.container + " ." + options.listItemClassName + ":last").css('background-color', '#' + options.lastItemColor);
 				}
+			} else if((options.oddColor) || (options.evenColor)) {
+				if (options.oddColor) {		// use :even because jQuery is zero-based (eg. 1, 3, 5... are "even" but we consider them "odd")
+					jQuery(this.container + " ." + options.listItemClassName + ":even").css('background-color', '#' + options.oddColor);
+				}	
+				if (options.evenColor) {	// use :odd because jQuery is zero-based (eg. 0, 2, 4... are "odd" but we consider them "even")
+					jQuery(this.container + " ." + options.listItemClassName + ":odd").css('background-color', '#' + options.evenColor);
+				}	
 			}
 			return this;
 		};
 
 		that.deleteFromBundle = function(id) {
-			jQuery('#' + this.itemID + id).remove();
+			if(options.useAnimation) {
+				jQuery('#' + this.itemID + id).slideUp(that.animationDuration, function() { this.remove(); });
+			} else {
+				jQuery('#' + this.itemID + id).remove();
+			}
 			jQuery(this.container).append("<input type='hidden' name='" + that.fieldNamePrefix + id + "_delete' value='1'/>");
 
 			this.decrementCount();
 			this.updateBundleFormState();
 
 			that.showUnsavedChangesWarning(true);
+			
+			if (this.onDeleteItem) { this.onDeleteItem(id); }
 
 			return this;
 		};

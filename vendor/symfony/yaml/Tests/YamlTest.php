@@ -11,27 +11,30 @@
 
 namespace Symfony\Component\Yaml\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
-class YamlTest extends \PHPUnit_Framework_TestCase
+class YamlTest extends TestCase
 {
     public function testParseAndDump()
     {
-        $data = array('lorem' => 'ipsum', 'dolor' => 'sit');
+        $data = ['lorem' => 'ipsum', 'dolor' => 'sit'];
         $yml = Yaml::dump($data);
         $parsed = Yaml::parse($yml);
         $this->assertEquals($data, $parsed);
     }
 
-    /**
-     * @group legacy
-     */
-    public function testLegacyParseFromFile()
+    public function testZeroIndentationThrowsException()
     {
-        $filename = __DIR__.'/Fixtures/index.yml';
-        $contents = file_get_contents($filename);
-        $parsedByFilename = Yaml::parse($filename);
-        $parsedByContents = Yaml::parse($contents);
-        $this->assertEquals($parsedByFilename, $parsedByContents);
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The indentation must be greater than zero');
+        Yaml::dump(['lorem' => 'ipsum', 'dolor' => 'sit'], 2, 0);
+    }
+
+    public function testNegativeIndentationThrowsException()
+    {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The indentation must be greater than zero');
+        Yaml::dump(['lorem' => 'ipsum', 'dolor' => 'sit'], 2, -4);
     }
 }

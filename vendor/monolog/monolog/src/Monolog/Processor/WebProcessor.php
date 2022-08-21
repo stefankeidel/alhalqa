@@ -16,7 +16,7 @@ namespace Monolog\Processor;
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class WebProcessor
+class WebProcessor implements ProcessorInterface
 {
     /**
      * @var array|\ArrayAccess
@@ -24,6 +24,10 @@ class WebProcessor
     protected $serverData;
 
     /**
+     * Default fields
+     *
+     * Array is structured as [key in record.extra => key in $serverData]
+     *
      * @var array
      */
     protected $extraFields = array(
@@ -36,7 +40,7 @@ class WebProcessor
 
     /**
      * @param array|\ArrayAccess $serverData  Array or object w/ ArrayAccess that provides access to the $_SERVER data
-     * @param array|null         $extraFields Extra field names to be added (all available by default)
+     * @param array|null         $extraFields Field names and the related key inside $serverData to be added. If not provided it defaults to: url, ip, http_method, server, referrer
      */
     public function __construct($serverData = null, array $extraFields = null)
     {
@@ -48,11 +52,19 @@ class WebProcessor
             throw new \UnexpectedValueException('$serverData must be an array or object implementing ArrayAccess.');
         }
 
+        if (isset($this->serverData['UNIQUE_ID'])) {
+            $this->extraFields['unique_id'] = 'UNIQUE_ID';
+        }
+
         if (null !== $extraFields) {
-            foreach (array_keys($this->extraFields) as $fieldName) {
-                if (!in_array($fieldName, $extraFields)) {
-                    unset($this->extraFields[$fieldName]);
+            if (isset($extraFields[0])) {
+                foreach (array_keys($this->extraFields) as $fieldName) {
+                    if (!in_array($fieldName, $extraFields)) {
+                        unset($this->extraFields[$fieldName]);
+                    }
                 }
+            } else {
+                $this->extraFields = $extraFields;
             }
         }
     }
@@ -94,10 +106,6 @@ class WebProcessor
     {
         foreach ($this->extraFields as $extraName => $serverName) {
             $extra[$extraName] = isset($this->serverData[$serverName]) ? $this->serverData[$serverName] : null;
-        }
-
-        if (isset($this->serverData['UNIQUE_ID'])) {
-            $extra['unique_id'] = $this->serverData['UNIQUE_ID'];
         }
 
         return $extra;

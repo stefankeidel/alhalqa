@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2009-2011 Whirl-i-Gig
+ * Copyright 2009-2018 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -31,7 +31,7 @@
 	$va_profile_info = Installer::getProfileInfo("./profiles/xml", $ps_profile)
 ?>
 <div id='box'>
-	<div id="logo"><img src="<?php print $vs_url_path; ?>/graphics/ca_logo.png"/></div><!-- end logo -->
+	<div id="logo"><img src="<?php print $vs_url_path; ?>/graphics/logo.svg" width="327" height="45"/></div><!-- end logo -->
 	<div id="content">
 	<H1>
 		Installing CollectiveAccess <?php print constant('__CollectiveAccess__'); ?>...
@@ -100,6 +100,7 @@
 				caIncrementProgress($vn_progress, "Processing user groups");
 				$vo_installer->processGroups();
 
+				$vn_progress += 2;
 				caIncrementProgress($vn_progress, "Creating logins");
 				$va_login_info = $vo_installer->processLogins();
 
@@ -118,6 +119,10 @@
 				$vn_progress += 7;
 				caIncrementProgress($vn_progress, "Setting up hierarchies");
 				$vo_installer->processMiscHierarchicalSetup();
+				
+				$vn_progress += 2;
+				caIncrementProgress($vn_progress, "Processing metadata alerts");
+				$vo_installer->processMetadataAlerts();
 
 				caIncrementProgress($vn_progress, "Performing post install tasks");
 				$vo_installer->performPostInstallTasks();

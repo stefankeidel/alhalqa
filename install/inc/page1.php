@@ -28,13 +28,13 @@
  */
 	if (!constant('__CollectiveAccess_Installer__')) { die("Cannot run"); }
 	
-	require_once(__CA_APP_DIR__.'/lib/ca/ConfigurationCheck.php');
+	require_once(__CA_APP_DIR__.'/lib/ConfigurationCheck.php');
 	
 	$o_config = Configuration::load();
 ?>
 
 <div id='box'>
-	<div id="logo"><img src="<?php print $vs_url_path; ?>/graphics/ca_logo.png"/></div><!-- end logo -->
+	<div id="logo"><img src="<?php print $vs_url_path; ?>/graphics/logo.svg" width="327" height="45"/></div><!-- end logo -->
 	<div id="content">
 	<H1>
 		<?php _p('Version %1 installer (XML)', constant('__CollectiveAccess__')); ?>
@@ -105,7 +105,7 @@
 			}
 ?>
 				
-				<div class="loginSubmitButton"><a href='#' onclick='jQuery("#page1form").submit();' class='form-button'><span class='form-button'><img src='<?php print $vs_url_path; ?>/graphics/glyphicons_206_ok_2.png' border='0' alt='<?php _p('Begin installation'); ?>' class='form-button-left' style='padding-right: 10px;'/> <?php _p('Begin installation'); ?></span></a></div>
+				<div class="loginSubmitButton"><a href='#' onclick='jQuery("#page1form").submit();' class='form-button'><span class='form-button'><i class="form-button-left fa fa-check-circle-o fa-2x" style='padding-right: 10px;'></i> <?php _p('Begin installation'); ?></span></a></div>
 				<input type='hidden' name='page' value='2'/>
 			</form>
 		</div><!-- end installForm -->

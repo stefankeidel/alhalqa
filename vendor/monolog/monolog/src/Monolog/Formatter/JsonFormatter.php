@@ -11,6 +11,10 @@
 
 namespace Monolog\Formatter;
 
+use Exception;
+use Monolog\Utils;
+use Throwable;
+
 /**
  * Encodes whatever record data is passed to it as json
  *
@@ -18,7 +22,7 @@ namespace Monolog\Formatter;
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class JsonFormatter implements FormatterInterface
+class JsonFormatter extends NormalizerFormatter
 {
     const BATCH_MODE_JSON = 1;
     const BATCH_MODE_NEWLINES = 2;
@@ -27,10 +31,18 @@ class JsonFormatter implements FormatterInterface
     protected $appendNewline;
 
     /**
-     * @param int $batchMode
+     * @var bool
      */
-    public function __construct($batchMode = self::BATCH_MODE_JSON, $appendNewline = true)
+    protected $includeStacktraces = false;
+
+    /**
+     * @param int $batchMode
+     * @param bool $appendNewline
+     * @param int $maxDepth
+     */
+    public function __construct($batchMode = self::BATCH_MODE_JSON, $appendNewline = true, $maxDepth = 9)
     {
+        parent::__construct(null, $maxDepth);
         $this->batchMode = $batchMode;
         $this->appendNewline = $appendNewline;
     }
@@ -64,7 +76,7 @@ class JsonFormatter implements FormatterInterface
      */
     public function format(array $record)
     {
-        return json_encode($record) . ($this->appendNewline ? "\n" : '');
+        return $this->toJson($this->normalize($record), true) . ($this->appendNewline ? "\n" : '');
     }
 
     /**
@@ -83,6 +95,14 @@ class JsonFormatter implements FormatterInterface
     }
 
     /**
+     * @param bool $include
+     */
+    public function includeStacktraces($include = true)
+    {
+        $this->includeStacktraces = $include;
+    }
+
+    /**
      * Return a JSON-encoded array of records.
      *
      * @param  array  $records
@@ -90,7 +110,7 @@ class JsonFormatter implements FormatterInterface
      */
     protected function formatBatchJson(array $records)
     {
-        return json_encode($records);
+        return $this->toJson($this->normalize($records), true);
     }
 
     /**
@@ -112,5 +132,83 @@ class JsonFormatter implements FormatterInterface
         $this->appendNewline = $oldNewline;
 
         return implode("\n", $records);
+    }
+
+    /**
+     * Normalizes given $data.
+     *
+     * @param mixed $data
+     *
+     * @return mixed
+     */
+    protected function normalize($data, $depth = 0)
+    {
+        if ($depth > $this->maxDepth) {
+            return 'Over '.$this->maxDepth.' levels deep, aborting normalization';
+        }
+
+        if (is_array($data)) {
+            $normalized = array();
+
+            $count = 1;
+            foreach ($data as $key => $value) {
+                if ($count++ > 1000) {
+                    $normalized['...'] = 'Over 1000 items ('.count($data).' total), aborting normalization';
+                    break;
+                }
+
+                $normalized[$key] = $this->normalize($value, $depth+1);
+            }
+
+            return $normalized;
+        }
+
+        if ($data instanceof Exception || $data instanceof Throwable) {
+            return $this->normalizeException($data);
+        }
+
+        if (is_resource($data)) {
+            return parent::normalize($data);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Normalizes given exception with or without its own stack trace based on
+     * `includeStacktraces` property.
+     *
+     * @param Exception|Throwable $e
+     *
+     * @return array
+     */
+    protected function normalizeException($e)
+    {
+        // TODO 2.0 only check for Throwable
+        if (!$e instanceof Exception && !$e instanceof Throwable) {
+            throw new \InvalidArgumentException('Exception/Throwable expected, got '.gettype($e).' / '.Utils::getClass($e));
+        }
+
+        $data = array(
+            'class' => Utils::getClass($e),
+            'message' => $e->getMessage(),
+            'code' => (int) $e->getCode(),
+            'file' => $e->getFile().':'.$e->getLine(),
+        );
+
+        if ($this->includeStacktraces) {
+            $trace = $e->getTrace();
+            foreach ($trace as $frame) {
+                if (isset($frame['file'])) {
+                    $data['trace'][] = $frame['file'].':'.$frame['line'];
+                }
+            }
+        }
+
+        if ($previous = $e->getPrevious()) {
+            $data['previous'] = $this->normalizeException($previous);
+        }
+
+        return $data;
     }
 }

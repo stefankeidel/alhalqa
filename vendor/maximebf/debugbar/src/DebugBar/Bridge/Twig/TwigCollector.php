@@ -26,6 +26,8 @@ use DebugBar\DataCollector\Renderable;
  * $env = new TraceableTwigEnvironment(new Twig_Environment($loader));
  * $debugbar->addCollector(new TwigCollector($env));
  * </code>
+ * 
+ * @deprecated use DebugBar\Bridge\TwigProfileCollector instead
  */
 class TwigCollector extends DataCollector implements Renderable, AssetProvider
 {
@@ -68,7 +70,7 @@ class TwigCollector extends DataCollector implements Renderable, AssetProvider
                 'icon' => 'leaf',
                 'widget' => 'PhpDebugBar.Widgets.TemplatesWidget',
                 'map' => 'twig',
-                'default' => '[]'
+                'default' => json_encode(array('templates' => array())),
             ),
             'twig:badge' => array(
                 'map' => 'twig.nb_templates',

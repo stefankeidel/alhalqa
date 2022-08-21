@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2015-2016 Whirl-i-Gig
+ * Copyright 2015-2021 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -28,20 +28,20 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License version 3
  *
  * ----------------------------------------------------------------------
- */
-
+ */	
 # --------------------------------------------------------------------------------------------
 /**
  * Display exception error screen
  * @param Exception $e
  */
 function caDisplayException(Exception $e) {
-	if(class_exists('AppController')) { AppController::getInstance()->removeAllPlugins(); }
+    if (defined("__CA_LIB_DIR__")) { require_once(__CA_LIB_DIR__.'/Logging/KLogger/KLogger.php'); }
+	if(!is_a($e, "DatabaseException") && class_exists('AppController')) { AppController::getInstance()->removeAllPlugins(); }
 
 	$pn_errno = 0;
 	$ps_errstr = $e->getMessage();
-	$ps_errfile = __FILE__;
-	$pn_errline = __LINE__;
+	$ps_errfile = $e->getFile();
+	$pn_errline = $e->getLine();
 	$pa_errcontext = $e->getTrace();
 	$pa_errcontext_args = caExtractStackTraceArguments($pa_errcontext);
 	$pa_request_params = caExtractRequestParams();
@@ -95,12 +95,15 @@ function caDisplayFatalError($pn_errno, $ps_errstr, $ps_errfile, $pn_errline, $p
  * @return array
  */
 function caExtractStackTraceArguments($pa_errcontext) {
-	if(!is_array($pa_errcontext)) { return array(); }
-	$pa_args = array();
+	if(!is_array($pa_errcontext)) { return []; }
+	
+	$o_purifier = caGetHTMLPurifier();
+	$pa_args = [];
+	
 	foreach($pa_errcontext as $vn_i => $va_trace) {
-		if(!is_array($va_trace)) { return array(); }
-		if(!isset($va_trace['args']) || !is_array($va_trace['args'])) { return array(); }
-		$pa_args[$vn_i] = array();
+		if(!is_array($va_trace)) { return []; }
+		if(!isset($va_trace['args']) || !is_array($va_trace['args'])) { return []; }
+		$pa_args[$vn_i] = [];
 		foreach($va_trace['args'] as $vn_j => $vm_arg) {
 			if (is_object($vm_arg)) {
 				$pa_args[$vn_i][] = 'Object '.get_class($vm_arg);
@@ -111,9 +114,11 @@ function caExtractStackTraceArguments($pa_errcontext) {
 			} elseif(is_bool($vm_arg)) {
 				$pa_args[$vn_i][] = $vm_arg ? "true" : "false";
 			} elseif(is_string($vm_arg)) {
-				$pa_args[$vn_i][] = "'".(string)$vm_arg."'";
+				$vm_arg = $o_purifier->purify((string)$vm_arg);
+				$pa_args[$vn_i][] = "'{$vm_arg}'";
 			} else {
-				$pa_args[$vn_i][] = (string)$vm_arg;
+				$vm_arg = $o_purifier->purify((string)$vm_arg);
+				$pa_args[$vn_i][] = $vm_arg;
 			}
 		}
 	}
@@ -125,14 +130,14 @@ function caExtractStackTraceArguments($pa_errcontext) {
  * @return array
  */
 function caExtractRequestParams() {
-	if(!include_once(pathinfo(__FILE__, PATHINFO_DIRNAME).'/../../vendor/autoload.php')) { return array(); }
+	if(!include_once(pathinfo(__FILE__, PATHINFO_DIRNAME).'/../../vendor/autoload.php')) { return []; }
 
-	if(!is_array($_REQUEST)) { return array(); }
+	if(!is_array($_REQUEST)) { return []; }
 
-	$o_purifier = new HTMLPurifier();
-	$pa_params = array();
+	$o_purifier = caGetHTMLPurifier();
+	$pa_params = [];
 	foreach($_REQUEST as $vs_k => $vm_val) {
-		if(is_array($vs_k)) { $vs_k = join(',', caFlattenArray($vs_k));}
+		if(is_array($vm_val)) { $vm_val = join(',', caFlattenArray($vm_val));}
 		if($vs_k == 'password') { continue; } // don't dump plain text passwords on screen
 		$pa_params[$o_purifier->purify($vs_k)] = $o_purifier->purify($vm_val);
 	}
@@ -140,4 +145,15 @@ function caExtractRequestParams() {
 	return $pa_params;
 }
 # --------------------------------------------------------------------------------------------
+ /**
+  * Return URL path to themes directory, guessing based upon PHP script name is constants aren't set
+  *
+  * @return string
+  */
+function caGetThemeUrlPath() : string {
+	$tmp = explode("/", str_replace("\\", "/", $_SERVER['SCRIPT_NAME']));
+	array_pop($tmp);
+	return defined('__CA_THEME_URL__') ? __CA_THEME_URL__ : join("/", $tmp).'/themes/default';
+}
+# ---------------------------------------------------------------------------------------------
 		
