@@ -26,6 +26,11 @@ services:
     ports:
       - 8080:80
     restart: unless-stopped
+    environment:
+      - VIRTUAL_HOST=www.alhalqa-virtual.com
+      - LETSENCRYPT_HOST=www.alhalqa-virtual.com
+      - LETSENCRYPT_EMAIL=accounts@keidel.me
+    restart: unless-stopped
 
   db:
     image: mysql
