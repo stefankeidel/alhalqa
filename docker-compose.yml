@@ -17,6 +17,18 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     restart: unless-stopped
 
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    depends_on:
+      - proxy
+    volumes:
+      - ./proxy/certs:/etc/nginx/certs:rw
+      - ./proxy/vhost.d:/etc/nginx/vhost.d:rw
+      - ./proxy/html:/usr/share/nginx/html:rw
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
   collectiveaccess:
     build: .
     volumes:
@@ -24,8 +36,14 @@ services:
       - .:/var/www/html
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - 8080:80
+      - 8081:80
     restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - VIRTUAL_HOST=admin.alhalqa-virtual.com
+      - LETSENCRYPT_HOST=admin.alhalqa-virtual.com
+      - LETSENCRYPT_EMAIL=accounts@keidel.me
 
   db:
     image: mysql
