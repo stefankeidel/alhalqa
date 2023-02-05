@@ -1,6 +1,5 @@
 FROM ubuntu:20.04
 
-
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
     apache2 \
@@ -35,4 +34,7 @@ RUN apt-get update \
     mediainfo
 
 EXPOSE 80
-CMD apachectl -D FOREGROUND
+
+
+ADD ./docker/entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

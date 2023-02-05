@@ -26,11 +26,6 @@ services:
     ports:
       - 8080:80
     restart: unless-stopped
-    environment:
-      - VIRTUAL_HOST=www.alhalqa-virtual.com
-      - LETSENCRYPT_HOST=www.alhalqa-virtual.com
-      - LETSENCRYPT_EMAIL=accounts@keidel.me
-    restart: unless-stopped
 
   db:
     image: mysql
@@ -42,9 +37,8 @@ services:
       MYSQL_DATABASE: alhalqa_virtual
       MYSQL_PASSWORD: alhalqa_virtual
     ports:
-      - 3306:3306
-    expose:
-      - 3306
+      - 8006:3306
+
     volumes:
       - alhalqa_db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
