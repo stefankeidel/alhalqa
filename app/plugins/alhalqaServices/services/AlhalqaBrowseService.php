@@ -34,8 +34,8 @@
   *
   */
   
-require_once(__CA_LIB_DIR__."/ca/Service/BrowseService.php");
-require_once(__CA_LIB_DIR__."/core/Datamodel.php");
+require_once(__CA_LIB_DIR__."/Service/BrowseService.php");
+require_once(__CA_LIB_DIR__."/Datamodel.php");
 
 class AlhalqaBrowseService extends BrowseService {
 
