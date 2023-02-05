@@ -22,4 +22,4 @@ setup.php
 /support/scripts/*.php
 /support/scripts/*.sh
 /app/plugins/vimeo/conf/*.conf
-
+vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer/HTML/
