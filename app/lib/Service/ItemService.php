@@ -128,20 +128,12 @@ class ItemService extends BaseJSONService {
 				continue;
 			}
 			
-			if(caGetOption('coordinates', $va_options, true)) { // Geocode attribute "coordinates" option returns an array which we want to serialize in the response, so we'll need to get it as a structured return value
+			if(caGetOption('coordinates', $va_options)) { // Geocode attribute "coordinates" option returns an array which we want to serialize in the response, so we'll need to get it as a structured return value
 				$va_options['returnWithStructure'] = true;
 				unset($va_options['template']);	// can't use template with structured return value
 			}
 
 			$vm_return = $t_instance->get($vs_bundle,$va_options);
-			
-			if(caGetOption('returnWithStructure', $va_options, true)) {	// unroll structured response into flat list
-				$vm_return = array_reduce($vm_return,
-					function($c, $v) { 
-						return array_merge($c, array_values($v));
-					}, []
-				);
-			}
 
 			// render 'empty' arrays as JSON objects, not as lists (which is the default behavior of json_encode)
 			if(is_array($vm_return) && sizeof($vm_return)==0) {
@@ -252,7 +244,7 @@ class ItemService extends BaseJSONService {
 		if($t_instance instanceof RepresentableBaseModel) {
 			$va_reps = $t_instance->getRepresentations($va_versions);
 			if(is_array($va_reps) && (sizeof($va_reps)>0)) {
-				$va_return['representations'] = caSanitizeArray($va_reps, ['removeNonCharacterData' => true]);
+				$va_return['representations'] = $va_reps; // caSanitizeArray($va_reps, ['removeNonCharacterData' => true]);
 			}
 		}
 
@@ -322,7 +314,7 @@ class ItemService extends BaseJSONService {
 				if($t_rel_instance instanceof RepresentableBaseModel) {
 					foreach($va_related_items as &$va_rel_item) {
 						if($t_rel_instance->load($va_rel_item[$t_rel_instance->primaryKey()])) {
-							$va_rel_item['representations'] = caSanitizeArray($t_rel_instance->getRepresentations($va_versions), ['removeNonCharacterData' => true]);
+							$va_rel_item['representations'] = $t_rel_instance->getRepresentations($va_versions);
 						}
 					}
 				}
@@ -406,7 +398,7 @@ class ItemService extends BaseJSONService {
 		if($t_instance instanceof RepresentableBaseModel) {
 			$va_reps = $t_instance->getRepresentations();
 			if(is_array($va_reps) && (sizeof($va_reps)>0)) {
-				$va_return['representations'] = caSanitizeArray($va_reps, ['removeNonCharacterData' => true]);
+				$va_return['representations'] = $va_reps; //caSanitizeArray($va_reps, ['removeNonCharacterData' => true]);
 			}
 		}
 
@@ -665,7 +657,7 @@ class ItemService extends BaseJSONService {
 					}
 					$va_return['representations'] = join($vs_delimiter, $va_urls);
 				} else {
-					$va_return['representations'] = caSanitizeArray($t_instance->getRepresentations(['original'], ['removeNonCharacterData' => true]));
+					$va_return['representations'] = $t_instance->getRepresentations(['original']); //caSanitizeArray(, ['removeNonCharacterData' => true]));
 				}
 
 				if(is_array($va_return['representations'])) {
