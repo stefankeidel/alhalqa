@@ -57,6 +57,33 @@ class AlhalqaItemService extends ItemService {
 			$vs_copyright_holder = $t_object->get('ca_entities.preferred_labels', array('restrictToRelationshipTypes' => 'copyright'));
 			if($vs_copyright_holder) { $va_info['copyright_holder'] = $vs_copyright_holder; }
 
+            // include sets for objects
+            $t_set = new ca_sets();
+			$va_sets = $t_set->getSetsForItem($t_object->tableNum(), $t_object->getPrimaryKey(), array('checkAccess' => 1));
+			$va_info['sets'] = $va_sets;
+
+            // include multifiles for representations
+            if (is_array($va_info['representations'])) {
+
+                foreach ($va_info['representations'] as $vn_rep_id => &$va_rep) {
+                    $t_rep = new ca_object_representations($vn_rep_id);
+                    $multifiles = $t_rep->getFileList($vn_rep_id, $pn_start=null, $pn_num_files=null, ['original']);
+                }
+
+                foreach ($multifiles as $multifile) {
+                    $urls_media_original[] = array(
+                        'width'=> $multifile['original_width'],
+                        'height'=> $multifile['original_height'],
+                        'url'=> $multifile['original_url']
+                    );
+                }
+
+                if (sizeof($urls_media_original) > 0) {
+                    $va_rep['multifiles'] = $urls_media_original;
+                }
+            }
+
+
 			// include urls for reference img
 			$va_objects = $t_object->getRelatedItems('ca_objects', array('restrictToRelationshipTypes' => 'reference'));
 			if(!is_array($va_objects) || sizeof($va_objects) != 1) { return $va_info;; }
@@ -68,6 +95,18 @@ class AlhalqaItemService extends ItemService {
 
 			$va_info['reference_image_urls'] = $va_rep['urls'];
 		}
+
+		if(($this->getTableName() == 'ca_object_representations') && is_array($va_info) && sizeof($va_info)>0) {
+            $vn_rep_id = $va_info['representation_id']['value'];
+            $t_rep = new ca_object_representations($vn_rep_id);
+            $multifiles = $t_rep->getFileList($vn_rep_id, $pn_start=null, $pn_num_files=null, ['original']);
+
+			foreach ($multifiles as $multifile) {
+                $urls_media_original[] = $multifile['original_url'];
+            }
+
+            $va_info['multifiles'] = $urls_media_original;
+        }
 
 		return $va_info;
 	}
