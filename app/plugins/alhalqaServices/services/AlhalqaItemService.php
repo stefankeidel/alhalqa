@@ -90,10 +90,10 @@ class AlhalqaItemService extends ItemService {
 
 			$va_object = array_shift($va_objects);
 			$t_rel_object = new ca_objects($va_object['object_id']);
-			$va_rep = $t_rel_object->getPrimaryRepresentation(array('preview170', 'medium', 'alhalqa1000', 'alhalqa2000'));
-			if(!is_array($va_rep) || !is_array($va_rep['urls'])) { return $va_info;; }
 
-			$va_info['reference_image_urls'] = $va_rep['urls'];
+            $va_reference_rep = $t_rel_object->getPrimaryRepresentation(array('preview170', 'medium', 'alhalqa1000', 'alhalqa2000', 'mediumlarge'));
+            if(!is_array($va_reference_rep) || !is_array($va_reference_rep['urls'])) { return $va_info;; }
+            $va_info['reference_image_urls'] = $va_reference_rep['urls'];
 		}
 
 		if(($this->getTableName() == 'ca_object_representations') && is_array($va_info) && sizeof($va_info)>0) {
